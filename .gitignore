@@ -10,3 +10,14 @@ buildNumber.properties
 
 # Avoid ignoring Maven wrapper jar file (.jar files are usually ignored)
 !/.mvn/wrapper/maven-wrapper.jar
+
+# ignore project settings
+.settings/
+.classpath
+.project
+
+
+# ignore test
+src/test/
+*.json
+*.db
