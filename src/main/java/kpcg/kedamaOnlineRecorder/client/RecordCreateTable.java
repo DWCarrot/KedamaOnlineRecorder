@@ -2,12 +2,16 @@ package kpcg.kedamaOnlineRecorder.client;
 
 import java.sql.Statement;
 
+import io.netty.util.internal.logging.InternalLogger;
+import io.netty.util.internal.logging.InternalLoggerFactory;
 import kpcg.kedamaOnlineRecorder.sqlite.SQLBuilder;
 import kpcg.kedamaOnlineRecorder.sqlite.SQLiteManager;
 import kpcg.kedamaOnlineRecorder.sqlite.SQLiteOperation;
 
 public class RecordCreateTable implements SQLiteOperation {
 
+	private static final InternalLogger logger = InternalLoggerFactory.getInstance(RecordCreateTable.class);
+	
 	@Override
 	public void operate(SQLiteManager mgr, Statement sqlStmt) throws Exception {
 		sqlStmt.execute(SQLBuilder.get()
@@ -39,7 +43,7 @@ public class RecordCreateTable implements SQLiteOperation {
 				.split(')')
 				.toString());
 		//TODO log
-		System.out.println("#record " + this.getClass());
+		logger.info("> record: create table excute");
 	}
 	
 	@Override

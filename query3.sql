@@ -1,0 +1,1 @@
+SELECT `_rowid_`,`uuid`,`name`,datetime(`timestamp1`/1000,'unixepoch','localtime') as `time1`,datetime(`timestamp2`/1000,'unixepoch','localtime') as `time2`, `integrity` FROM `online_record` ORDER BY `_rowid_`

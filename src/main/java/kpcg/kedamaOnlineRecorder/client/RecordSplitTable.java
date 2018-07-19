@@ -6,12 +6,17 @@ import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 
+import io.netty.util.internal.logging.InternalLogger;
+import io.netty.util.internal.logging.InternalLoggerFactory;
 import kpcg.kedamaOnlineRecorder.sqlite.SQLBuilder;
 import kpcg.kedamaOnlineRecorder.sqlite.SQLiteManager;
 import kpcg.kedamaOnlineRecorder.sqlite.SQLiteOperation;
 
 public class RecordSplitTable implements SQLiteOperation {
 
+	private static final InternalLogger logger = InternalLoggerFactory.getInstance(RecordSplitTable.class);
+	
+	
 	private static DateTimeFormatter formatter = DateTimeFormatter.BASIC_ISO_DATE;
 	private static ZoneId zone = ZoneId.systemDefault();
 
@@ -24,7 +29,6 @@ public class RecordSplitTable implements SQLiteOperation {
 
 	@Override
 	public void operate(SQLiteManager mgr, Statement sqlStmt) throws Exception {
-		// TODO Auto-generated method stub
 		Instant now = Instant.now();
 		LocalDateTime time = LocalDateTime.ofInstant(now, zone );
 		String newTableName = "online_record" + time.format(formatter);
@@ -65,18 +69,20 @@ public class RecordSplitTable implements SQLiteOperation {
 				.keyword("CREATE").keyword("TABLE").table("online_count").keyword('(')
 				.column("timestamp").keyword("INTEGER").split(',')
 				.column("online").keyword("INTEGER").split(',')
+				.column("bref").keyword("TEXT").split(',')
 				.column("integrity").keyword("BOOLEAN")
 				.split(')');
 		sqlStmt.execute(sql.toString());
 		//TODO log
-		System.out.println("#record " + this.getClass());
+		logger.info("> record: split table");
+//		System.out.println("#record " + this.getClass());
 	}
 
 	@Override
 	public void sqliteOperationExceptionCaught(SQLiteManager mgr, Throwable cause) throws Exception {
 		// TODO Auto-generated method stub
 		if(!mgr.isDBLocked())
-			cause.printStackTrace();
+			logger.warn(cause);
 	}
 
 	@Override

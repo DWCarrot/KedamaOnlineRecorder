@@ -7,9 +7,15 @@ import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.net.SocketAddress;
 import java.nio.charset.Charset;
+import java.time.Instant;
+import java.time.LocalDateTime;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+
+import io.netty.util.internal.logging.InternalLogger;
+import io.netty.util.internal.logging.InternalLoggerFactory;
+import kpcg.kedamaOnlineRecorder.util.Util;
 
 public class MinecraftPing implements Runnable {
 
@@ -19,6 +25,9 @@ public class MinecraftPing implements Runnable {
 		
 		public void pingHandleExceptionCaught(Throwable cause) throws Exception;
 	}
+	
+	
+	private static final InternalLogger logger = InternalLoggerFactory.getInstance(MinecraftPing.class);
 	
 	
 	private InetSocketAddress address;
@@ -193,13 +202,15 @@ public class MinecraftPing implements Runnable {
 			
 		} catch (Exception e) {
 			// TODO: handle exception
-			e.printStackTrace();
+			logger.debug(e);
+//			e.printStackTrace();
 		} finally {
 			try {
 				socket.close();
 			} catch (IOException e) {
 				// TODO Auto-generated catch block
-				e.printStackTrace();
+				logger.warn(e);
+//				e.printStackTrace();
 			}
 		}
 		if(t == null || t.isInterrupted())
@@ -243,14 +254,16 @@ public class MinecraftPing implements Runnable {
 							handler.handle(node);
 						} catch (InterruptedException e) {
 							//TODO log
-							e.printStackTrace();
+							logger.debug(e);
+//							e.printStackTrace();
 							break;
 						} catch (Exception e) {
 							handler.pingHandleExceptionCaught(e);
 						}
 					} else {
 						//TODO log
-						System.out.println(node);
+//						System.out.println(node);
+						logger.info("> ping: result ({})", node);
 					}
 				}
 				synchronized (lock) {
@@ -259,20 +272,24 @@ public class MinecraftPing implements Runnable {
 						targetT += cfg.NormalInterval * 1000L * (i + 1);
 						normalT += cfg.NormalInterval * 1000L * (i + 1);
 					}
-					System.err.println(targetT);
+					logger.debug("> ping: next @{}", LocalDateTime.ofInstant(Instant.ofEpochMilli(targetT), Util.zone).format(Util.formatter));
+//					System.err.println(targetT);
 					lock.wait(targetT - System.currentTimeMillis());
 				}
 			} catch (InterruptedException e) {
 				//TODO log
-				e.printStackTrace();
+				logger.debug(e);
+//				e.printStackTrace();
 				break;
 			} catch (Exception e) {
 				// TODO: handle exception
-				e.printStackTrace();
+				logger.warn(e);
+//				e.printStackTrace();
 			}
 		}
 		t = null;
 		handler = null;
+		logger.info("> ping: stopped");
 	}
 	
 	public void stop() {

@@ -12,7 +12,7 @@ import kpcg.kedamaOnlineRecorder.util.Util;
 
 public class IRCListenerClientConfig {
 	
-	public class NetConfig {
+	public static class NetConfig {
 		
 		public String host;
 		
@@ -22,7 +22,7 @@ public class IRCListenerClientConfig {
 	}
 	public NetConfig net = new NetConfig();
 	
-	public class UserConfig {
+	public static class UserConfig {
 
 		public String nick;
 		
@@ -40,7 +40,7 @@ public class IRCListenerClientConfig {
 	}
 	public UserConfig user = new UserConfig();
 	
-	public class ListenerConfig {
+	public static class ListenerConfig {
 
 		public String target;
 		
@@ -52,7 +52,7 @@ public class IRCListenerClientConfig {
 	}
 	public ListenerConfig listener = new ListenerConfig();
 
-	public class ResponseConfig {
+	public static class ResponseConfig {
 		// @ $nick $key params... 
 		@JsonProperty("ping_key")
 		public String pingKey;
@@ -70,7 +70,7 @@ public class IRCListenerClientConfig {
 	@JsonProperty("message_timeout")
 	public int MessageTimeout;	//s
 	
-	public class RestartIntervalSettings {
+	public static class RestartIntervalSettings {
 	
 		@JsonProperty("name_in_use")
 		public int NameInUse;

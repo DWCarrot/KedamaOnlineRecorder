@@ -2,6 +2,7 @@ package kpcg.kedamaOnlineRecorder;
 
 import java.util.Scanner;
 
+import io.netty.util.Version;
 import kpcg.kedamaOnlineRecorder.client.ClientComponent;
 
 /**
@@ -10,10 +11,10 @@ import kpcg.kedamaOnlineRecorder.client.ClientComponent;
  */
 public class App {
 	
-	
+	public static Integer version = 2;
 	
 	public static void main(String[] args) {
-		System.out.println("Hello World!");
+		System.out.println("Hello World!" + " $" + version);
 		RecorderComponent client = ClientComponent.getInstance();
     	Scanner s;
     	String p;

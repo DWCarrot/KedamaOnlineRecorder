@@ -4,11 +4,16 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 
+import io.netty.util.internal.logging.InternalLogger;
+import io.netty.util.internal.logging.InternalLoggerFactory;
 import kpcg.kedamaOnlineRecorder.sqlite.SQLBuilder;
 import kpcg.kedamaOnlineRecorder.sqlite.SQLiteManager;
 import kpcg.kedamaOnlineRecorder.sqlite.SQLiteOperation;
 
 public abstract class RecordGetUUID implements SQLiteOperation {
+	
+	private static final InternalLogger logger = InternalLoggerFactory.getInstance(RecordGetUUID.class);
+	
 	
 	private long timestamp;
 	
@@ -65,7 +70,8 @@ public abstract class RecordGetUUID implements SQLiteOperation {
 							.column("uuid").keyword("LIKE").value(tempUUID);
 					sqlStmt.execute(sql.toString());
 					// TODO log
-					System.out.printf("\"correct\":{\"id\":\"%s\",\"name\":\"%s\"}\n", uuid, name);
+					logger.info("> record: upate ({},{})", uuid, name);
+//					System.out.printf("\"correct\":{\"id\":\"%s\",\"name\":\"%s\"}\n", uuid, name);
 				}
 				sql = SQLBuilder.get()
 						.keyword("UPDATE").table("player_list").keyword("SET")
@@ -79,10 +85,12 @@ public abstract class RecordGetUUID implements SQLiteOperation {
 							.keyword("VALUES").keyword('(').value(uuid).split(',').value(name).split(')');
 					sqlStmt.execute(sql.toString());
 					// TODO log
-					System.out.printf("\"insert\":{\"id\":\"%s\",\"name\":\"%s\"}\n", uuid, name);
+					logger.info("> record: insert ({},{})", uuid, name);
+//					System.out.printf("\"insert\":{\"id\":\"%s\",\"name\":\"%s\"}\n", uuid, name);
 				} else {
 					// TODO log
-					System.out.printf("\"update\":{\"id\":\"%s\",\"name\":\"%s\"}\n", uuid, name);
+					logger.info("> record: upate ({},{})", uuid, name);
+//					System.out.printf("\"update\":{\"id\":\"%s\",\"name\":\"%s\"}\n", uuid, name);
 				}
 			}
 		}
@@ -93,7 +101,7 @@ public abstract class RecordGetUUID implements SQLiteOperation {
 	public void sqliteOperationExceptionCaught(SQLiteManager mgr, Throwable cause) throws Exception {
 		// TODO Auto-generated method stub
 		if(!mgr.isDBLocked())
-			cause.printStackTrace();
+			logger.warn(cause);
 	}
 
 	@Override

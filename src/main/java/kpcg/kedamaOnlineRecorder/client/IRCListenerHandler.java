@@ -5,8 +5,12 @@ import java.util.regex.Pattern;
 
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
+import io.netty.util.internal.logging.InternalLogger;
+import io.netty.util.internal.logging.InternalLoggerFactory;
 
 public class IRCListenerHandler extends ChannelInboundHandlerAdapter {
+	
+	private final static InternalLogger logger = InternalLoggerFactory.getInstance(IRCListenerHandler.class);
 	
 	IRCListenerClientConfig.ListenerConfig cfg;
 	
@@ -57,6 +61,7 @@ public class IRCListenerHandler extends ChannelInboundHandlerAdapter {
 		if(list != null) {
 			list.add(name, timestamp);
 		}
+		logger.info("> irc: join {}", name);
 		System.out.println("join: " + name);
 	}
 	
@@ -65,6 +70,7 @@ public class IRCListenerHandler extends ChannelInboundHandlerAdapter {
 		if(list != null) {
 			list.remove(name, timestamp);
 		}
+		logger.info("> irc: part {}", name);
 		System.out.println("part: " + name);
 	}
 }

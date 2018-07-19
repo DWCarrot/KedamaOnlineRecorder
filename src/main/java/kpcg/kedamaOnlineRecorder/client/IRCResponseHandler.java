@@ -63,7 +63,7 @@ public class IRCResponseHandler extends ChannelInboundHandlerAdapter {
 					IRCMessage resp = new IRCMessage();
 					resp.command = "PRIVMSG";
 					if(ircMsg.middles.get(0).equals(config.user.channel)) {
-						resp.middles.add(config.user.channel);
+						resp.addMiddles(config.user.channel);
 						isPublic = true;
 					} else {
 						resp.addMiddles(ircMsg.nick);
@@ -139,7 +139,7 @@ public class IRCResponseHandler extends ChannelInboundHandlerAdapter {
 		p = "%S";
 		i = s.indexOf(p);
 		if(i >= 0)
-			s.replace(i, i + p.length(), LocalDateTime.now().format(Util.formatter));
+			s.replace(i, i + p.length(), param);
 		return s.toString();
 	}
 }

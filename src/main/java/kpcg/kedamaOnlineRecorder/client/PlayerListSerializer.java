@@ -18,13 +18,13 @@ public class PlayerListSerializer extends JsonSerializer<PlayerList> {
 	public void serialize(PlayerList value, JsonGenerator gen, SerializerProvider serializers) throws IOException {
 		// TODO Auto-generated method stub
 		gen.writeStartArray();
-		Map<String, Instant> list = value.getList();
+		Map<String, Long> list = value.getList();
 		if (list != null) {
-			for (Map.Entry<String, Instant> entry : list.entrySet()) {
+			for (Map.Entry<String, Long> entry : list.entrySet()) {
 				gen.writeStartObject();
 				gen.writeStringField("name", entry.getKey());
-				gen.writeStringField("join", LocalDateTime.ofInstant(entry.getValue(), Util.zone).format(Util.formatter));
-				gen.writeEndArray();
+				gen.writeStringField("join", LocalDateTime.ofInstant(Instant.ofEpochMilli(entry.getValue()), Util.zone).format(Util.formatter));
+				gen.writeEndObject();
 			}
 		}
 		gen.writeEndArray();

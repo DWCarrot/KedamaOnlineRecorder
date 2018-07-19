@@ -1,5 +1,8 @@
 package kpcg.kedamaOnlineRecorder.client;
 
+import io.netty.util.internal.logging.InternalLogger;
+import io.netty.util.internal.logging.InternalLoggerFactory;
+
 public class WatchDogTimer implements Runnable {
 
 	public interface WorkingProcess {
@@ -8,6 +11,10 @@ public class WatchDogTimer implements Runnable {
 		
 		public void rebootExceptionCaught(Throwable cause) throws Exception;
 	}
+
+	
+	private static final InternalLogger logger = InternalLoggerFactory.getInstance(WatchDogTimer.class);
+	
 	
 	private WorkingProcess workingProcess;
 	
@@ -42,8 +49,7 @@ public class WatchDogTimer implements Runnable {
 	@Override
 	public void run() {
 		t = Thread.currentThread();
-		// TODO log
-		System.out.printf("wdt start [timeout=%dms]\n", timeout);
+		logger.info("> wdt: start [timeout={}ms]", timeout);
 		while (!t.isInterrupted()) {
 			try {
 				synchronized (lock) {
@@ -54,7 +60,7 @@ public class WatchDogTimer implements Runnable {
 							workingProcess.reboot();
 						} catch (InterruptedException e) {
 							// TODO log
-							e.printStackTrace();
+							logger.debug(e);
 							break;
 						} catch (Exception e) {
 							workingProcess.rebootExceptionCaught(e);
@@ -63,15 +69,16 @@ public class WatchDogTimer implements Runnable {
 				}
 			} catch (InterruptedException e) {
 				// TODO log
-				e.printStackTrace();
+				logger.debug(e);
 				break;
 			} catch (Exception e) {
 				// TODO: log
-				e.printStackTrace();
+				logger.warn(e);
 			}
 		}
 		unfeeded = false;
 		workingProcess = null;
 		t = null;
+		logger.info("> wdt: stop");
 	}
 }

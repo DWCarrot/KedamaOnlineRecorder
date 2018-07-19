@@ -4,11 +4,15 @@ import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
 import io.netty.channel.EventLoopGroup;
-import io.netty.util.internal.shaded.org.jctools.queues.CircularArrayOffsetCalculator;
+import io.netty.util.internal.logging.InternalLogger;
+import io.netty.util.internal.logging.InternalLoggerFactory;
 import kpcg.kedamaOnlineRecorder.client.WatchDogTimer.WorkingProcess;
 
 public class IRCPreHandler extends ChannelInboundHandlerAdapter implements WorkingProcess {
 
+	private final static InternalLogger logger = InternalLoggerFactory.getInstance(IRCPreHandler.class);
+	
+	
 	private IRCListenerClientConfig.UserConfig cfg;
 	
 	private String target;
@@ -160,6 +164,7 @@ public class IRCPreHandler extends ChannelInboundHandlerAdapter implements Worki
 	public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
 		if(cause instanceof IRCException) {
 			ctx.disconnect();
+			logger.warn(cause);
 			return;
 		}
 		super.exceptionCaught(ctx, cause);
@@ -176,8 +181,7 @@ public class IRCPreHandler extends ChannelInboundHandlerAdapter implements Worki
 
 	@Override
 	public void rebootExceptionCaught(Throwable cause) throws Exception {
-		//TODO log
-		cause.printStackTrace();
+		logger.warn(cause);
 	}
 	
 	

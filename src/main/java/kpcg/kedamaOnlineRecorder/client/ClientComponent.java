@@ -1,18 +1,24 @@
 package kpcg.kedamaOnlineRecorder.client;
 
+import java.util.List;
 import java.io.File;
 import java.io.IOException;
 import java.sql.SQLException;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
 
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonMappingException;
 
-import io.netty.channel.EventLoopGroup;
-import io.netty.channel.nio.NioEventLoopGroup;
-import io.netty.util.internal.shaded.org.jctools.queues.CircularArrayOffsetCalculator;
+import io.netty.util.internal.logging.InternalLogger;
+import io.netty.util.internal.logging.InternalLoggerFactory;
 import kpcg.kedamaOnlineRecorder.RecorderComponent;
-import kpcg.kedamaOnlineRecorder.sqlite.SQLBuilder;
+import kpcg.kedamaOnlineRecorder.client.ClientComponentConfig.SQLiteConfig.SQLSplit;
 import kpcg.kedamaOnlineRecorder.sqlite.SQLiteManager;
 import kpcg.kedamaOnlineRecorder.util.Util;
 
@@ -28,6 +34,11 @@ public class ClientComponent implements RecorderComponent {
 	
 	
 	
+	private static final InternalLogger logger = InternalLoggerFactory.getInstance(ClientComponent.class);
+
+
+	private static final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+	
 	
 	public ClientComponentConfig config;
 	
@@ -36,8 +47,10 @@ public class ClientComponent implements RecorderComponent {
 	
 	public PlayerList list;
 	
-	public EventLoopGroup group;
+	public ScheduledFuture<?> sqlSplit;
 	
+	public ScheduledExecutorService service;
+		
 	//0x02
 	public IRCListenerClient client;
 	
@@ -65,10 +78,11 @@ public class ClientComponent implements RecorderComponent {
 		ircCfg = config.irc;
 		client = new IRCListenerClient();
 		client.setConfig(ircCfg);
-		client.init(group);
+		client.setExecutor(service);
 	}
 	
 	public void startIRC() {
+		client.init(2);
 		client.start();
 	}
 	
@@ -88,7 +102,7 @@ public class ClientComponent implements RecorderComponent {
 	}
 	
 	public void startPinger() {
-		group.execute(pinger);
+		service.execute(pinger);
 	}
 	
 	public void stopPinger() {
@@ -103,34 +117,38 @@ public class ClientComponent implements RecorderComponent {
 		try {
 			System.out.println(Util.mapper.writeValueAsString(this));
 		} catch (JsonProcessingException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			logger.warn(e);
 		}
 	}
 	
 	@Override
 	public boolean start() {
 		try {
+			logger.info("> start");
 			updateConfigs();
-			mgr = new SQLiteManager(new File(config.sqlite.file), config.sqlite.queue);
+			mgr = new SQLiteManagerWithLog(new File(config.sqlite.file), config.sqlite.queue);
 			list = new PlayerList();
 			list.setRecord(mgr);
 			list.setSqliteAddTimeout(config.sqlite.timeout * 1000L);
 			
 			
 			GetPlayerInfo.set(config.mojangAPI);
-			group = new NioEventLoopGroup(config.thread);
-			group.execute(mgr);
+			service = Executors.newScheduledThreadPool(config.thread);
+			service.execute(mgr);
 			
 			list.init(5000);
+			
+			startSplitService();
+			
 			//TODO log
-			System.out.println("initial " + list.getList());
+//			System.out.println("initial " + list.getList());
+			logger.info("> list: initialed {}", list.getList());
 		} catch (ClassNotFoundException | IOException | SQLException e) {
 			// TODO Auto-generated catch block
-			e.printStackTrace();
+			logger.warn(e);
 		} catch (InterruptedException e) {
 			// TODO Auto-generated catch block
-			e.printStackTrace();
+			logger.debug(e);
 		}
 		return false;
 	}
@@ -148,15 +166,17 @@ public class ClientComponent implements RecorderComponent {
 			}
 			stopIRC();
 			stopPinger();
-			if(group != null) {
-				group.shutdownGracefully().sync();
+			startSplitService();
+			if(service != null) {
+				service.shutdown();
 				//TODO log
-				System.out.println("shutdown");
-				group = null;
+				logger.info("> shutdown");
+				service = null;
 			}
-		} catch (InterruptedException e) {
+		} catch (Exception e) {
 			// TODO Auto-generated catch block
-			e.printStackTrace();
+			logger.debug(e);
+			
 		}
 		return false;
 	}
@@ -213,4 +233,32 @@ public class ClientComponent implements RecorderComponent {
 		return false;
 	}
 
+	public void startSplitService() {
+		SQLSplit splitCfg = config.sqlite.split;
+		if(splitCfg.period < 86400)
+			throw new IllegalArgumentException("period can not less than 1 day");
+		long start = LocalDateTime.parse(splitCfg.start, formatter).toInstant(Util.offset).toEpochMilli();
+		long period = splitCfg.period * 1000L;
+		int p = splitCfg.period * 2 / 86400;
+		long initialDelay = start - System.currentTimeMillis();
+		if(initialDelay < 0)
+			initialDelay += ((-initialDelay) / period + 1) * period;
+		sqlSplit = service.scheduleAtFixedRate(new Runnable() {
+			@Override
+			public void run() {
+				if(mgr != null)
+					mgr.add(new RecordSplitTable(p), config.sqlite.timeout * 1000);
+				if(list != null)
+					list.fliteTable();
+			}
+		}, initialDelay, period, TimeUnit.MILLISECONDS);
+		logger.info("> sql: split service start");
+	}
+	
+	public void stopSplitServeice() {
+		if(sqlSplit != null) {
+			boolean b = sqlSplit.cancel(true);
+			logger.info("> sql: split service stop ({})", b);
+		}
+	}
 }

@@ -24,9 +24,9 @@ public class SQLiteManager implements Runnable {
 	
 	protected boolean dBLocked = false;
 	
-	private long blockedWait = 3000;
+	protected long blockedWait = 3000;
 	
-	private int queueCapacity;
+	protected int queueCapacity;
 	
 	public SQLiteManager(File dbFile, int capacity) throws SQLException, ClassNotFoundException {
 		if(jdbc == null)
