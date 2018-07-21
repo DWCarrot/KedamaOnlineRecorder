@@ -23,9 +23,9 @@ public class RecordAboutLeave implements SQLiteOperation {
 	
 	long timestamp1;
 	
-	boolean integrity;
+	Boolean integrity;
 	
-	public RecordAboutLeave(String uuid, String name, long timestamp2, long timestamp1, boolean integrity) {
+	public RecordAboutLeave(String uuid, String name, long timestamp2, long timestamp1, Boolean integrity) {
 		this.uuid = uuid;
 		this.name = name;
 		this.timestamp2 = timestamp2;
@@ -44,8 +44,11 @@ public class RecordAboutLeave implements SQLiteOperation {
 				.keyword("UPDATE").table("online_record").keyword("SET");
 		if(tmpId != null)
 			sql.column("uuid").keyword('=').value(uuid).split(',');
-		sql.column("timestamp2").keyword('=').value(timestamp2).split(',');
-		sql.column("integrity").keyword('=').value(integrity);
+		sql.column("timestamp2").keyword('=').value(timestamp2 / 1000L);
+		if(integrity != null) {
+			sql.split(',');
+			sql.column("integrity").keyword('=').value(integrity);
+		}
 		sql.keyword("WHERE").column("rowid").keyword('=').keyword('(')
 			.keyword("SELECT").keyword("MAX").split('(').column("rowid").split(')').split(' ')
 			.keyword("FROM").table("online_record")
@@ -56,13 +59,15 @@ public class RecordAboutLeave implements SQLiteOperation {
 			.split(')');
 		sqlStmt.execute(sql.toString());
 		if(sqlStmt.getUpdateCount() < 1) {
+			if(integrity == null)
+				integrity = Boolean.FALSE;
 			sql = SQLBuilder.get()
 					.keyword("INSERT").keyword("INTO").table("online_record")
 					.keyword("VALUES").keyword('(')
 					.value(uuid).split(',')
 					.value(name).split(',')
-					.value(timestamp2).split(',')
-					.value(timestamp1).split(',')
+					.value(timestamp2 / 1000L).split(',')
+					.value(timestamp1 / 1000L).split(',')
 					.value(integrity)
 					.split(')');
 			sqlStmt.execute(sql.toString());

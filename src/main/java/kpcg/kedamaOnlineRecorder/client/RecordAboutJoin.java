@@ -19,10 +19,13 @@ public class RecordAboutJoin implements SQLiteOperation {
 	
 	private long timestamp;
 	
-	public RecordAboutJoin(String uuid, String name, long timestamp) {
+	private Boolean integrity;
+	
+	public RecordAboutJoin(String uuid, String name, long timestamp, Boolean integrity) {
 		this.uuid = uuid;
 		this.name = name;
 		this.timestamp = timestamp;
+		this.integrity = integrity;
 	}
 
 	@Override
@@ -30,9 +33,17 @@ public class RecordAboutJoin implements SQLiteOperation {
 		// TODO Auto-generated method stub
 		SQLBuilder sql = SQLBuilder.get()
 				.keyword("INSERT").keyword("INTO").table("online_record")
-				.keyword('(').column("uuid").split(',').column("name").split(',').column("timestamp1").keyword(')')
+				.keyword('(').column("uuid").split(',').column("name").split(',').column("timestamp1");
+		if(integrity != null) {
+			sql.split(',').column("integrity");
+		}
+		sql.keyword(')')
 				.keyword("VALUES")
-				.keyword('(').value(uuid).split(',').value(name).split(',').value(timestamp).split(')');
+				.keyword('(').value(uuid).split(',').value(name).split(',').value(timestamp / 1000L);
+		if(integrity != null) {
+			sql.split(',').value(integrity);
+		}
+		sql.split(')');
 		sqlStmt.execute(sql.toString());
 		//TODO log
 		logger.info("> record: join ({},{})", uuid, name);

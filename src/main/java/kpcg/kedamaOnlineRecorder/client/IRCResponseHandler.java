@@ -1,6 +1,7 @@
 package kpcg.kedamaOnlineRecorder.client;
 
 import java.time.LocalDateTime;
+import java.util.Set;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
@@ -121,11 +122,25 @@ public class IRCResponseHandler extends ChannelInboundHandlerAdapter {
 	}
 
 	private String list(String param, boolean isPublic) {
-		try {
-			return Util.mapper.writeValueAsString(ClientComponent.getInstance().list.getList().keySet());
-		} catch (JsonProcessingException e) {
-			return e.toString();
+		PlayerList playerList = ClientComponent.instance.list;
+		if(param != null && !isPublic) {
+			if(param.charAt(0) == '+') {
+				String name = param.substring(1);
+				if(playerList.getList().containsKey(name))
+					return new StringBuilder('#').append("add invalid: ").append('"').append(name).append('"').toString();
+				playerList.add(name, System.currentTimeMillis());
+				return new StringBuilder('#').append("add execute: ").append('\'').append(name).append('\'').toString();
+			}
+			if(param.charAt(0) == '-') {
+				String name = param.substring(1);
+				if(!playerList.getList().containsKey(name))
+					return new StringBuilder('#').append("remove invalid: ").append('\'').append(name).append('\'').toString();
+				playerList.remove(name, System.currentTimeMillis());
+				return new StringBuilder('#').append("remove execute: ").append('\'').append(name).append('\'').toString();
+			}
 		}
+		Set<String> list =playerList.getList().keySet();
+		return new StringBuilder('#').append(list.size()).append(' ').append(list).toString();
 	}
 
 	public String ping(String param, boolean isPub) {

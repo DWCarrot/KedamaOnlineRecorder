@@ -14,15 +14,15 @@ public class RecordCreateTable implements SQLiteOperation {
 	
 	@Override
 	public void operate(SQLiteManager mgr, Statement sqlStmt) throws Exception {
-		sqlStmt.execute(SQLBuilder.get()
-				.keyword("CREATE").keyword("TABLE").keyword("IF").keyword("NOT").keyword("EXISTS")
-				.table("player_list").keyword('(')
-				.column("uuid").keyword("CHAR").split('(').value(32).split(')').split(' ').keyword("NOT NULL").split(',')
-				.column("name").keyword("TEXT").keyword("NOT NULL").split(',')
-				.keyword("PRIMARY KEY").split('(').column("uuid").split(')')
-				.split(')').split(' ')
-				.keyword("WITHOUT").keyword("ROWID")
-				.toString());
+//		sqlStmt.execute(SQLBuilder.get()
+//				.keyword("CREATE").keyword("TABLE").keyword("IF").keyword("NOT").keyword("EXISTS")
+//				.table("player_list").keyword('(')
+//				.column("uuid").keyword("CHAR").split('(').value(32).split(')').split(' ').keyword("NOT NULL").split(',')
+//				.column("name").keyword("TEXT").keyword("NOT NULL").split(',')
+//				.keyword("PRIMARY KEY").split('(').column("uuid").split(')')
+//				.split(')').split(' ')
+//				.keyword("WITHOUT").keyword("ROWID")
+//				.toString());
 		sqlStmt.execute(SQLBuilder.get()
 				.keyword("CREATE").keyword("TABLE").keyword("IF").keyword("NOT").keyword("EXISTS")
 				.table("online_record").keyword('(')

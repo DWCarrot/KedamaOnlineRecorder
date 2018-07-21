@@ -11,7 +11,7 @@ import kpcg.kedamaOnlineRecorder.client.ClientComponent;
  */
 public class App {
 	
-	public static Integer version = 2;
+	public static Integer version = 4;
 	
 	public static void main(String[] args) {
 		System.out.println("Hello World!" + " $" + version);

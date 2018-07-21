@@ -34,7 +34,7 @@ public class RecordOnlineCount implements SQLiteOperation {
 		SQLBuilder sql = SQLBuilder.get()
 				.keyword("INSERT").keyword("INTO").table("online_count")
 				.keyword("VALUES").keyword('(')
-				.value(timestamp).split(',')
+				.value(timestamp / 1000L).split(',')
 				.value(online).split(',')
 				.value(bref).split(',')
 				.value(integrity)

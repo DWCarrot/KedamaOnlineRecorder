@@ -2,18 +2,13 @@ package kpcg.kedamaOnlineRecorder.client;
 
 import java.io.FileOutputStream;
 import java.io.OutputStream;
-import java.lang.reflect.Array;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Base64;
 import java.util.Base64.Decoder;
-import java.util.Collection;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
-import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
@@ -173,7 +168,7 @@ public class PlayerList implements MinecraftPing.MinecraftPingHandler {
 				logger.debug(e);
 				return;
 			}
-			record.add(new RecordAboutJoin(uuid, name, timestamp), sqliteAddTimeout);
+			record.add(new RecordAboutJoin(uuid, name, timestamp, true), sqliteAddTimeout);
 				
 		}
 	}
@@ -200,67 +195,64 @@ public class PlayerList implements MinecraftPing.MinecraftPingHandler {
 					logger.debug(e);
 					return;
 				}
-				record.add(new RecordAboutLeave(uuid, name, timestamp, time1.longValue(), true), sqliteAddTimeout);
+				record.add(new RecordAboutLeave(uuid, name, timestamp, time1.longValue(), null), sqliteAddTimeout);
 			}
 		}
 	}
 	
-	/**
-	 * 
-	 * @param players	[name=id]
-	 * @param timestamp
-	 */
 	public void check(Set<String> players, int online, long timestamp) {
 		Map<String, Long> toRemove = new HashMap<>();
 		Set<String> toAdd = players;
-		int rcv = players.size();
-		boolean canRemove = (online == rcv || online == rcv + 1);
-		for(Iterator<Entry<String, Long>> it = list.entrySet().iterator(); it.hasNext();) {
-			Entry<String, Long> e = it.next();
-			if(!toAdd.remove(e.getKey()) && canRemove) {
-				toRemove.put(e.getKey(), e.getValue());
-				it.remove();
-			}
+		int rcv = players.size();		
+		for(Entry<String, Long> entry : list.entrySet()) {
+			if(!toAdd.remove(entry.getKey()))
+				toRemove.put(entry.getKey(), entry.getValue());
 		}
-		for(String name : toAdd) {
-			list.put(name, timestamp);
-		}
+		//
 		realOnline = online;
-		if(record != null && !(toAdd.isEmpty() && toRemove.isEmpty() && list.size() == realOnline)) {
-			//online_record
-			String bref = null;
-			try {
-				bref = Util.mapper.writeValueAsString(list.keySet());
-			} catch (JsonProcessingException e) {
-				logger.warn(e);
-			}
-			record.add(new RecordOnlineCount(timestamp, online, false, bref), sqliteAddTimeout);
-			//remove
-			for (Entry<String, Long> entry : toRemove.entrySet()) {
-				String name = entry.getKey();
-				String uuid = null;
+		if(record != null) {
+			if(list.size() == online && toAdd.isEmpty()) {
+				//necessary-insufficient condition; unable to handle other condition in next step
+				logger.info("> list: integrity=true");
+			} else {
+				boolean canRemove = (online == rcv) || (list.size() + toAdd.size() - toRemove.size() == online);					
+				//online_record
+				String bref = null;
 				try {
-					uuid = getUUid(name, timestamp);
-				} catch (InterruptedException e) {
-					logger.debug(e);
-					return;
+					bref = Util.mapper.writeValueAsString(list.keySet());
+				} catch (JsonProcessingException e) {
+					logger.warn(e);
 				}
-				long timestamp1 = entry.getValue();
-				record.add(new RecordAboutLeave(uuid, name, timestamp, timestamp1, false), sqliteAddTimeout);
-			}
-			//join
-			for(String name : toAdd) {
-				String uuid = null;
-				try {
-					uuid = getUUid(name, timestamp);
-				} catch (InterruptedException e) {
-					logger.debug(e);
-					return;
+				record.add(new RecordOnlineCount(timestamp, online, false, bref), sqliteAddTimeout);
+				//remove
+				if(canRemove) {
+					for (Entry<String, Long> entry : toRemove.entrySet()) {
+						String name = entry.getKey();
+						list.remove(name);
+						String uuid = null;
+						try {
+							uuid = getUUid(name, timestamp);
+						} catch (InterruptedException e) {
+							logger.debug(e);
+							return;
+						}
+						long timestamp1 = entry.getValue();
+						record.add(new RecordAboutLeave(uuid, name, timestamp, timestamp1, false), sqliteAddTimeout);
+					}
 				}
-				record.add(new RecordAboutJoin(uuid, name, timestamp), sqliteAddTimeout);
+				//join
+				for(String name : toAdd) {
+					list.put(name, timestamp);
+					String uuid = null;
+					try {
+						uuid = getUUid(name, timestamp);
+					} catch (InterruptedException e) {
+						logger.debug(e);
+						return;
+					}
+					record.add(new RecordAboutJoin(uuid, name, timestamp, false), sqliteAddTimeout);
+				}
 			}
-		} else {
-			logger.info("> list: integrity=true");
 		}
 	}
 	
@@ -309,7 +301,8 @@ public class PlayerList implements MinecraftPing.MinecraftPingHandler {
 			table.put(name, uuid);
 		}
 		//
-		logger.debug("> ping: result ({})", players);
+		logger.info("> ping result ({}/{})", players.size(), online);
+		logger.debug("> ping: sample ({})", players);
 //		System.out.println("#ping " + players);
 		check(players, online,timestamp);
 	}

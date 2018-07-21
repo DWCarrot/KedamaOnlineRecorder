@@ -20,3 +20,9 @@ A Recorder to record the changes of player number in The Minecraft Server, with 
 - 使用java.util.ScheduleService管理各个部分线程
 - 第一个可以运行的版本
 - TODO：irc响应--手动修正
+
+
+## 2018/7/21
+- 再次修正ping修正的算法（证明了一个早上= =）
+- 上线测试进行中
+- TODO：模块化

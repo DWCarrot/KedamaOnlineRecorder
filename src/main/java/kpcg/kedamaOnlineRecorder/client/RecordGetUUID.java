@@ -59,7 +59,7 @@ public abstract class RecordGetUUID implements SQLiteOperation {
 			tempUUID = uuid;
 			uuid = getUuidFromMojang(name, timestamp, 3000);
 			if (uuid == null) {
-				uuid = new StringBuilder(32).append('@').append(name).append('?').append(timestamp).toString();
+				uuid = new StringBuilder(32).append('@').append(name).append('?').append(timestamp / 1000L).toString();
 			} else {
 				if (tempUUID != null) {
 					tempUUID = tempUUID.substring(0, tempUUID.indexOf('?'));

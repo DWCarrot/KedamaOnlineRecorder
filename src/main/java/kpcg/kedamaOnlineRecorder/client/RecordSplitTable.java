@@ -20,11 +20,11 @@ public class RecordSplitTable implements SQLiteOperation {
 	private static DateTimeFormatter formatter = DateTimeFormatter.BASIC_ISO_DATE;
 	private static ZoneId zone = ZoneId.systemDefault();
 
-	private int ignoreBeforeDays = 7;	//days
+	private int ignoreBefore = 7 * 24 * 60 * 60;	//seconds
 	
 	
-	public RecordSplitTable(int ignoreBeforeDays) {
-		this.ignoreBeforeDays = ignoreBeforeDays;
+	public RecordSplitTable(int ignoreBefore) {
+		this.ignoreBefore = ignoreBefore;
 	}
 
 	@Override
@@ -49,7 +49,7 @@ public class RecordSplitTable implements SQLiteOperation {
 				.keyword("WHERE")
 				.column("timestamp2").keyword("IS NULL")
 				.keyword("AND")
-				.column("timestamp1").keyword('>').value((now.getEpochSecond() - ignoreBeforeDays * 24 * 60 * 60) * 1000L);
+				.column("timestamp1").keyword('>').value(now.getEpochSecond() - ignoreBefore);
 		sql = SQLBuilder.get()
 				.keyword("INSERT").keyword("INTO").table("online_record")
 				.keyword('(').column("uuid").split(',').column("name").split(',').column("timestamp1").split(')').split(' ')

@@ -44,7 +44,7 @@ public class RecordInitPlayerList implements SQLiteOperation {
 						j = rs.findColumn("name");
 						k = rs.findColumn("timestamp1");						
 					}
-					list.put(rs.getString(j), rs.getLong(k));
+					list.put(rs.getString(j), rs.getLong(k) * 1000L);
 					table.put(rs.getString(j), rs.getString(i));
 				}
 			}

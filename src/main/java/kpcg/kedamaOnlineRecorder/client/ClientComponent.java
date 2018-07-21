@@ -142,7 +142,7 @@ public class ClientComponent implements RecorderComponent {
 			
 			//TODO log
 //			System.out.println("initial " + list.getList());
-			logger.info("> list: initialed {}", list.getList());
+			logger.info("> list: initialized {}", list.getList());
 		} catch (ClassNotFoundException | IOException | SQLException e) {
 			// TODO Auto-generated catch block
 			logger.warn(e);
@@ -225,6 +225,8 @@ public class ClientComponent implements RecorderComponent {
 						break;
 					}
 					break;
+				case "status":
+					break;
 				}
 			} catch (Exception e) {
 				e.printStackTrace();
@@ -235,12 +237,12 @@ public class ClientComponent implements RecorderComponent {
 
 	public void startSplitService() {
 		SQLSplit splitCfg = config.sqlite.split;
-		if(splitCfg.period < 86400)
+		if(splitCfg.period < 24 * 60 * 60)
 			throw new IllegalArgumentException("period can not less than 1 day");
 		long start = LocalDateTime.parse(splitCfg.start, formatter).toInstant(Util.offset).toEpochMilli();
-		long period = splitCfg.period * 1000L;
-		int p = splitCfg.period * 2 / 86400;
-		long initialDelay = start - System.currentTimeMillis();
+		long period = splitCfg.period * 1000L;	//ms
+		int p = splitCfg.period * 2;	//s
+		long initialDelay = start - System.currentTimeMillis();	//ms
 		if(initialDelay < 0)
 			initialDelay += ((-initialDelay) / period + 1) * period;
 		sqlSplit = service.scheduleAtFixedRate(new Runnable() {
