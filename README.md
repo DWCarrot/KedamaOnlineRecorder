@@ -1,5 +1,5 @@
 # KedamaOnlineRecorder
-A Recorder to record the changes of player number in The Minecraft Server, with database;inherit prj "kedamaListener" at https://github.com/DWCarrot/kedamaListener
+A Recorder to record the changes of player number in 'The Minecraft Server', with database;inherit prj "kedamaListener" at https://github.com/DWCarrot/kedamaListener
 
 
 
@@ -26,3 +26,10 @@ A Recorder to record the changes of player number in The Minecraft Server, with 
 - 再次修正ping修正的算法（证明了一个早上= =）
 - 上线测试进行中
 - TODO：模块化
+
+
+## 2018/7/23
+- 修复一些小bug
+- 模块化初步完成
+  ![](UML.png)
+- 修改database储存方式：运行表('online_count','online_record') ==[定时分离插入]==> 记录表 ('online_count_static','online_record_static')
