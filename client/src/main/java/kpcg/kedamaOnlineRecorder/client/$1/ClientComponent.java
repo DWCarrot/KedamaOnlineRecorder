@@ -251,7 +251,7 @@ public class ClientComponent implements RecorderComponent {
 					list.fliteTable();
 			}
 		}, initialDelay, period, TimeUnit.MILLISECONDS);
-		logger.info("> sql: split service start ({}+...{}ms)", initialDelay, period);
+		logger.info("> sql: split service start ({}+...{} ms)", initialDelay, period);
 	}
 	
 	public void stopSplitServeice() {

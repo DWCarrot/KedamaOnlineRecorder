@@ -98,8 +98,7 @@ public class PlayerList implements MinecraftPing.MinecraftPingHandler {
 				uuid = new StringBuilder(32).append('@').append(name).append('?').append(timestamp).toString();
 			} else {
 				if (tempUUID != null) {
-					//TODO update
-					
+					record.add(new RecordUpdateUUID(tempUUID.substring(0, tempUUID.indexOf('?')), uuid), sqliteAddTimeout);
 				}
 				table.put(name, uuid);
 				logger.info("> list: table append ({},{}) ({})", uuid, name, table.size());
@@ -142,6 +141,26 @@ public class PlayerList implements MinecraftPing.MinecraftPingHandler {
 		Long last = list.put(name, timestamp);
 		if(record != null) {
 			SQLiteOperationGroup g = null;
+			//join
+			String uuid = null;
+			try {				
+				uuid = getUUid(name, timestamp);
+			} catch (InterruptedException e) {
+				logger.debug(e);
+				return;
+			}
+			g = new SQLiteOperationGroup(new RecordAboutJoin(uuid, name, timestamp, true)).setNext(g);
+			//leave
+			if(last != null) {				
+				String uuid1 = null;
+				try {
+					uuid1 = getUUid(name, timestamp);
+				} catch (InterruptedException e) {
+					logger.debug(e);
+					return;
+				}
+				g = new SQLiteOperationGroup(new RecordAboutLeave(uuid1, name, timestamp, last.longValue(), false)).setNext(g);
+			}
 			//online_count
 			String bref = null;
 			try {
@@ -151,27 +170,7 @@ public class PlayerList implements MinecraftPing.MinecraftPingHandler {
 			}
 			if(last == null)
 				realOnline += 1;
-			g = new SQLiteOperationGroup(new RecordOnlineCount(timestamp, realOnline, last == null, bref)).setNext(g);		
-			//leave
-			if(last != null) {				
-				String uuid = null;
-				try {
-					uuid = getUUid(name, timestamp);
-				} catch (InterruptedException e) {
-					logger.debug(e);
-					return;
-				}
-				g = new SQLiteOperationGroup(new RecordAboutLeave(uuid, name, timestamp, last.longValue(), false)).setNext(g);
-			}	
-			//join
-			String uuid = null;
-			try {
-				uuid = getUUid(name, timestamp);
-			} catch (InterruptedException e) {
-				logger.debug(e);
-				return;
-			}
-			g = new SQLiteOperationGroup(new RecordAboutJoin(uuid, name, timestamp, true)).setNext(g);
+			g = new SQLiteOperationGroup(new RecordOnlineCount(timestamp, realOnline, last == null, bref)).setNext(g);
 			record.add(g, sqliteAddTimeout);
 		}
 	}
@@ -180,16 +179,6 @@ public class PlayerList implements MinecraftPing.MinecraftPingHandler {
 		Long time1 = list.remove(name);
 		if(record != null) {
 			SQLiteOperationGroup g = null;
-			//online_count
-			String bref = null;
-			try {
-				bref = Util.mapper.writeValueAsString(list.keySet());
-			} catch (JsonProcessingException e) {
-				logger.warn(e);
-			}
-			if(time1 != null)
-				realOnline -= 1;
-			g = new SQLiteOperationGroup(new RecordOnlineCount(timestamp, realOnline, time1 != null, bref)).setNext(g);
 			//leave
 			if(time1 != null) {
 				String uuid = null;
@@ -201,6 +190,16 @@ public class PlayerList implements MinecraftPing.MinecraftPingHandler {
 				}
 				g = new SQLiteOperationGroup(new RecordAboutLeave(uuid, name, timestamp, time1.longValue(), null)).setNext(g);
 			}
+			//online_count
+			String bref = null;
+			try {
+				bref = Util.mapper.writeValueAsString(list.keySet());
+			} catch (JsonProcessingException e) {
+				logger.warn(e);
+			}
+			if(time1 != null)
+				realOnline -= 1;
+			g = new SQLiteOperationGroup(new RecordOnlineCount(timestamp, realOnline, time1 != null, bref)).setNext(g);
 			record.add(g, sqliteAddTimeout);
 		}
 	}
@@ -222,14 +221,6 @@ public class PlayerList implements MinecraftPing.MinecraftPingHandler {
 			} else {
 				SQLiteOperationGroup g = null;
 				boolean canRemove = (online == rcv) || (list.size() + toAdd.size() - toRemove.size() == online);					
-				//online_record
-				String bref = null;
-				try {
-					bref = Util.mapper.writeValueAsString(list.keySet());
-				} catch (JsonProcessingException e) {
-					logger.warn(e);
-				}
-				g = new SQLiteOperationGroup(new RecordOnlineCount(timestamp, online, false, bref)).setNext(g);
 				//remove
 				if(canRemove) {
 					for (Entry<String, Long> entry : toRemove.entrySet()) {
@@ -258,6 +249,15 @@ public class PlayerList implements MinecraftPing.MinecraftPingHandler {
 					}
 					g = new SQLiteOperationGroup(new RecordAboutJoin(uuid, name, timestamp, false)).setNext(g);
 				}
+				//online_record
+				String bref = null;
+				try {
+					bref = Util.mapper.writeValueAsString(list.keySet());
+				} catch (JsonProcessingException e) {
+					logger.warn(e);
+				}
+				g = new SQLiteOperationGroup(new RecordOnlineCount(timestamp, online, false, bref)).setNext(g);
+				
 				record.add(g, sqliteAddTimeout);
 			}
 		}
@@ -272,10 +272,19 @@ public class PlayerList implements MinecraftPing.MinecraftPingHandler {
 		
 		if(decoder == null) {
 			try {
-				decoder = Base64.getMimeDecoder();
 				String src = node.get("favicon").asText();
 				int offset = src.indexOf(',') + 1;
-				byte[] data = decoder.decode(src.substring(offset));
+				src = src.substring(offset);
+				if(src.indexOf('\n') >= 0) {
+					decoder = Base64.getMimeDecoder();
+				} else {
+					if(src.indexOf('+') >= 0 || src.indexOf('/') >= 0) {
+						decoder = Base64.getDecoder();
+					} else {
+						decoder = Base64.getUrlDecoder();
+					}
+				}
+				byte[] data = decoder.decode(src);
 				OutputStream ofile = new FileOutputStream("favicon" + ".png");
 				ofile.write(data);
 				ofile.flush();
@@ -292,20 +301,22 @@ public class PlayerList implements MinecraftPing.MinecraftPingHandler {
 		ArrayNode array = (ArrayNode) v.get("sample");
 		int online = v.get("online").asInt();
 		Set<String> players = new HashSet<>();	//name,uuid
-		for(Iterator<JsonNode> it = array.iterator(); it.hasNext(); ) {
-			JsonNode n = it.next();
-			String name = n.get("name").asText();
-			String id = n.get("id").asText();
-			StringBuilder uuidB = new StringBuilder();
-			int i, j;
-			for(i = 0, j = id.indexOf('-', i); j > i; i = j + 1, j = id.indexOf('-', i)) {
-				uuidB.append(id.substring(i, j));
+		if(array != null) {
+			for(Iterator<JsonNode> it = array.iterator(); it.hasNext(); ) {
+				JsonNode n = it.next();
+				String name = n.get("name").asText();
+				String id = n.get("id").asText();
+				StringBuilder uuidB = new StringBuilder();
+				int i, j;
+				for(i = 0, j = id.indexOf('-', i); j > i; i = j + 1, j = id.indexOf('-', i)) {
+					uuidB.append(id.substring(i, j));
+				}
+				if(i < id.length())
+					uuidB.append(id.substring(i));
+				String uuid = uuidB.toString();
+				players.add(name);
+				table.put(name, uuid);
 			}
-			if(i < id.length())
-				uuidB.append(id.substring(i));
-			String uuid = uuidB.toString();
-			players.add(name);
-			table.put(name, uuid);
 		}
 		//
 		logger.info("> ping result ({}/{})", players.size(), online);

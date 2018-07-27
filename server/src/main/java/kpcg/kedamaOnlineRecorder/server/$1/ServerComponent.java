@@ -12,6 +12,9 @@ public class ServerComponent implements RecorderComponent {
 		return instance;
 	}
 	
+	public static final String configFile = "server-config.json";
+	
+	
 	@Override
 	public boolean execute(String cmd) {
 		if(cmd.charAt(0) == '#') {

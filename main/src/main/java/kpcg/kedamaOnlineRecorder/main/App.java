@@ -1,5 +1,6 @@
 package kpcg.kedamaOnlineRecorder.main;
 
+import java.io.Console;
 import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.Map;
@@ -32,11 +33,12 @@ public class App {
     	String s1;
     	String s2;
     	Pattern loadp = Pattern.compile("load (\\S+) as (\\w+)");
+    	Console console = System.console();
     	int i;
     	try {
-    		jin = new Scanner(System.in);
-    		while(jin.hasNext()) {
-    			s = jin.nextLine();
+//    		jin = new Scanner(System.in);
+    		while(true) {
+    			s = console.readLine();
     			System.out.println(':' + s);
     			if(s == null || s.isEmpty())
     				continue;
