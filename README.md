@@ -33,3 +33,9 @@ A Recorder to record the changes of player number in 'The Minecraft Server', wit
 - 模块化初步完成
   ![](UML.png)
 - 修改database储存方式：运行表('online_count','online_record') ==[定时分离插入]==> 记录表 ('online_count_static','online_record_static')
+
+
+## 2018/7/27
+- 修复另一些小bug
+- client正式上线！好像跑得挺稳的，大概吧（2018/7/28 09:00)
+- TODO：server数据接口
