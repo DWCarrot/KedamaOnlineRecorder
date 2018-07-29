@@ -28,7 +28,7 @@ public class RecordUpdateUUID implements SQLiteOperation {
 				.keyword("UPDATE").table("online_record").keyword("SET")
 				.column("uuid").keyword('=').value(uuid)
 				.keyword("WHERE")
-				.column("uuid").keyword("LIKE").value(tempUUID);
+				.column("uuid").keyword("LIKE").value(tempUUID + '%');
 		sqlStmt.execute(sql.toString());
 		// TODO log
 		logger.info("> record: update ({} => {})", tempUUID, uuid);		
