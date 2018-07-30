@@ -3,17 +3,10 @@ package kpcg.kedamaOnlineRecorder.client.$1;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.MalformedURLException;
-import java.net.SocketTimeoutException;
 import java.net.URL;
-import java.nio.charset.Charset;
 import java.util.ArrayList;
-import java.util.Map;
-
 import javax.net.ssl.HttpsURLConnection;
-import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-
 import kpcg.kedamaOnlineRecorder.util.Util;
 
 public class GetPlayerInfo {

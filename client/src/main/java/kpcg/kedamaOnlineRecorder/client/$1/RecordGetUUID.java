@@ -1,7 +1,6 @@
 package kpcg.kedamaOnlineRecorder.client.$1;
 
 import java.sql.ResultSet;
-import java.sql.SQLException;
 import java.sql.Statement;
 
 import io.netty.util.internal.logging.InternalLogger;

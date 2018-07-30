@@ -2,7 +2,7 @@ package kpcg.kedamaOnlineRecorder.client.$1;
 
 import java.io.FileOutputStream;
 import java.io.OutputStream;
-import java.util.Arrays;
+import java.util.ArrayList;
 import java.util.Base64;
 import java.util.Base64.Decoder;
 import java.util.Comparator;
@@ -12,7 +12,6 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
-
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
@@ -21,7 +20,6 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import io.netty.util.internal.logging.InternalLogger;
 import io.netty.util.internal.logging.InternalLoggerFactory;
 import kpcg.kedamaOnlineRecorder.sqlite.SQLiteManager;
-import kpcg.kedamaOnlineRecorder.sqlite.SQLiteOperation;
 import kpcg.kedamaOnlineRecorder.sqlite.SQLiteOperationGroup;
 import kpcg.kedamaOnlineRecorder.util.Util;
 
@@ -29,11 +27,11 @@ import kpcg.kedamaOnlineRecorder.util.Util;
 public class PlayerList implements MinecraftPing.MinecraftPingHandler {
 	
 	
-	private static final Comparator<Entry<String, String>> comparator = new Comparator<Map.Entry<String,String>>() {	
+	public static final Comparator<Entry<String, String>> comparator = new Comparator<Map.Entry<String,String>>() {	
 		@Override
 		public int compare(Entry<String, String> o1, Entry<String, String> o2) {
 			 //<name, uuid>
-			return o1.getValue().compareTo(o1.getValue());
+			return o1.getValue().compareTo(o2.getValue());
 		}
 	};
 	
@@ -67,6 +65,10 @@ public class PlayerList implements MinecraftPing.MinecraftPingHandler {
 		return list;
 	}
 	
+	public Map<String, String> getTable() {
+		return table;
+	}
+	
 	public void init(long timeout) throws InterruptedException {
 		if(record != null) {
 			record.add(new RecordCreateTable2(), sqliteAddTimeout);
@@ -95,14 +97,23 @@ public class PlayerList implements MinecraftPing.MinecraftPingHandler {
 				throw e;
 			}
 			if (uuid == null) {
-				uuid = new StringBuilder(32).append('@').append(name).append('?').append(timestamp).toString();
+				if(tempUUID != null) {
+					uuid = tempUUID;
+				} else {
+					uuid = new StringBuilder(32).append('@').append(name).append('?').append(timestamp).toString();
+					table.put(name, uuid);
+					logger.info("> list: table append ({},{}) ({})", uuid, name, table.size());
+				}
 			} else {
 				if (tempUUID != null) {
 					record.add(new RecordUpdateUUID(tempUUID.substring(0, tempUUID.indexOf('?')), uuid), sqliteAddTimeout);
+					table.put(name, uuid);
+					logger.info("> list: table update ({} <= {}) ({})", uuid, tempUUID, table.size());
+				} else {
+					table.put(name, uuid);
+					logger.info("> list: table append ({},{}) ({})", uuid, name, table.size());
 				}
-				table.put(name, uuid);
-				logger.info("> list: table append ({},{}) ({})", uuid, name, table.size());
-			}
+			}			
 		}
 		return uuid;
 	}
@@ -110,18 +121,18 @@ public class PlayerList implements MinecraftPing.MinecraftPingHandler {
 	public int fliteTable() {
 		int count = 0;
 		synchronized (table) {
-			Entry<String, String>[] collection = (Entry<String, String>[]) table.entrySet().toArray();
-			Arrays.sort(collection, comparator);
+			ArrayList<Entry<String, String>> collection = new ArrayList<>(table.entrySet());
+			collection.sort(comparator);
 			int i, j;
 			boolean repeat;
-			for(i = 0, j = 1, repeat = false; j < collection.length; ++j) {
-				if(collection[i].getValue().equals(collection[j].getValue())) {
+			for(i = 0, j = 1, repeat = false; j < collection.size(); ++j) {
+				if(collection.get(i).getValue().equals(collection.get(j).getValue())) {
 					repeat = true;
 				} else {
 					if(repeat) {
 						repeat = false;
 						for(int k = i; k < j; ++k, ++count)
-							table.remove(collection[k].getKey());
+							table.remove(collection.get(k).getKey());
 						i = j;
 					} else {
 						++i;
@@ -130,7 +141,7 @@ public class PlayerList implements MinecraftPing.MinecraftPingHandler {
 			}
 			if(repeat) {
 				for(int k = i; k < j; ++k, ++count)
-					table.remove(collection[k].getKey());
+					table.remove(collection.get(k).getKey());
 			}
 		}
 		logger.info("> list: table reserved ({}) removed ({})", table.size(), count);

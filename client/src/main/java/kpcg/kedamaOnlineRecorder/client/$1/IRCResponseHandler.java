@@ -3,13 +3,9 @@ package kpcg.kedamaOnlineRecorder.client.$1;
 import java.time.LocalDateTime;
 import java.util.Set;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
-import com.fasterxml.jackson.databind.cfg.ConfigFeature;
-
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
-import kpcg.kedamaOnlineRecorder.client.$1.IRCListenerClientConfig.ResponseConfig;
 import kpcg.kedamaOnlineRecorder.util.CreepyClass;
 import kpcg.kedamaOnlineRecorder.util.Util;
 

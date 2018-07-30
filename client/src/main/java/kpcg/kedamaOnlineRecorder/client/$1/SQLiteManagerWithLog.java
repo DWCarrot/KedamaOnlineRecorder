@@ -3,8 +3,6 @@ package kpcg.kedamaOnlineRecorder.client.$1;
 import java.io.File;
 import java.sql.SQLException;
 import java.sql.Statement;
-import java.util.concurrent.ScheduledFuture;
-
 import io.netty.util.internal.logging.InternalLogger;
 import io.netty.util.internal.logging.InternalLoggerFactory;
 import kpcg.kedamaOnlineRecorder.sqlite.SQLiteManager;

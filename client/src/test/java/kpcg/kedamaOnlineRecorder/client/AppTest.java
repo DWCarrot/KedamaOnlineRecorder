@@ -1,22 +1,21 @@
 package kpcg.kedamaOnlineRecorder.client;
 
 import java.io.File;
-import java.io.IOException;
-import java.sql.SQLException;
-import java.sql.Statement;
-import java.util.UUID;
+import java.util.ArrayList;
+import java.util.Map;
+import java.util.Scanner;
+import java.util.Map.Entry;
 
-import io.netty.util.internal.logging.InternalLogger;
-import io.netty.util.internal.logging.InternalLoggerFactory;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+
 import junit.framework.Test;
 import junit.framework.TestCase;
 import junit.framework.TestSuite;
-import kpcg.kedamaOnlineRecorder.sqlite.SQLiteManager;
-import kpcg.kedamaOnlineRecorder.sqlite.SQLiteOperation;
-import kpcg.kedamaOnlineRecorder.client.$1.RecordCreateTable;
-import kpcg.kedamaOnlineRecorder.client.$1.RecordAboutJoin;
-import kpcg.kedamaOnlineRecorder.client.$1.RecordSplitTable;
-import kpcg.kedamaOnlineRecorder.client.$1.RecordAboutLeave;
+import kpcg.kedamaOnlineRecorder.util.RecorderComponent;
+import kpcg.kedamaOnlineRecorder.client.$1.ClientComponent;
+import kpcg.kedamaOnlineRecorder.client.$1.PlayerList;
 /**
  * Unit test for simple App.
  */
@@ -41,6 +40,8 @@ public class AppTest
         return new TestSuite( AppTest.class );
     }
 
+    boolean install = true;
+    
     /**
      * Rigourous Test :-)
      */
@@ -48,110 +49,69 @@ public class AppTest
     {
         assertTrue( true );
     }
-    
-    static class MGR extends kpcg.kedamaOnlineRecorder.sqlite.SQLiteManager {
-    	
-    	private static final InternalLogger logger = InternalLoggerFactory.getInstance(SQLiteManager.class);
-    	
-    	private String fileName;
-    	
-    	public MGR(File dbFile, int capacity) throws SQLException, ClassNotFoundException {
-    		super(dbFile, capacity);
-    		fileName = dbFile.getAbsolutePath();
-    	}
-    	
-    	@Override
-    	public void run() {
-    		logger.info("> sql: start @{}", fileName);
-    		SQLiteOperation operation = null;
-    		Statement sqlStmt = null;
-    		t = Thread.currentThread();
-    		long t1,t2;
-    		while(!t.isInterrupted()) {
-    			try {
-    				try {
-    					if(operation == null || !(operation.reserve(queue.size() >= queueCapacity) && dBLocked)) {
-    						operation = queue.take();
-    						sqlStmt = sqlConn.createStatement();
-    					}
-    					dBLocked = false;
-    					t2 = System.nanoTime();
-    					operation.operate(this, sqlStmt);
-    					sqlConn.commit();
-    					t1 = System.nanoTime();
-    					operation = null;
-    					sqlStmt.close();
-    					logger.info("> sql: execute ({}ns)", t1 - t2);
-    				} catch (InterruptedException e) {
-    					logger.debug(e);
-    					break;
-    				} catch (Exception e) {
-    					sqlConn.rollback();
-    					dBLocked = isDBLocked(e);
-    					operation.sqliteOperationExceptionCaught(this, e);
-    				}
-    			} catch (InterruptedException e) {
-    				logger.debug(e);
-    				break;
-    			} catch (Exception e) {
-    				dBLocked = isDBLocked(e);
-    				if(!dBLocked)
-    					logger.warn(e);
-    			}
-    			if(dBLocked) {
-    				logger.warn("> sql: database is locked");
-    				try {
-    					synchronized (sqlConn) {
-    						sqlConn.wait(blockedWait);
-    					}
-    				} catch (InterruptedException e) {
-    					logger.debug(e);
-    					break;			
-    				}
-    			}
-    		}
-    		close();
-    		queue.clear();
-    		dBLocked = false;
-    		t = null;
-    		logger.info("> sql: stop");
-    	}
-
-    	
-    }
 
     public void testApp2()
     {
-    	System.out.println("sqlite test");
-    	SQLiteManager mgr;
-    	Thread t;
-    	int times = 100;
-		try {
-			mgr = new MGR(new File("testSQL.db"), times * 3);
-			mgr.add(new RecordCreateTable(), 1000);
-			t = new Thread(mgr);
-			t.start();
-			
-	    	for(int i = 100000; i < times + 100000; ++i) {
-	    		UUID u = UUID.randomUUID();
-	    		String uuid = Long.toHexString(u.getMostSignificantBits()) + Long.toHexString(u.getLeastSignificantBits());
-	    		String name = u.toString();
-	    		long timestamp1 = System.currentTimeMillis();
-	    		long timestamp2 = timestamp1 + 60000;
-	    		System.out.println("i = " + i);
-	    		mgr.add(new RecordAboutJoin(uuid, name, timestamp1, true), 3000);
-	    		if((i & 1023) == 1023)
-	    			mgr.add(new RecordSplitTable(10, "_" + i), 3000);
-	    		mgr.add(new RecordAboutLeave(uuid, name, timestamp2, timestamp1, null), 3000);	    		
-	    	}
-	    	System.out.println("add ok");
-	    	//while(System.in.read() != '#');
-	    	mgr.close();
-		} catch (ClassNotFoundException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (SQLException e) {
-			// TODO Auto-generated catch block
+    	RecorderComponent client = ClientComponent.getInstance();
+    	Scanner s;
+    	String p;
+    	
+    	ObjectMapper mapper = new ObjectMapper();
+    	
+    	Map<String, String> table = null;
+    	PlayerList list = null;
+    	
+
+    	if(install) {
+    		assertTrue( true );
+    		return;
+    	}
+    	
+    	try {
+    		s = new Scanner(System.in);
+    		while(s.hasNext()) {
+    			p = s.nextLine();
+    			if(p.equals("/quit"))
+    				break;
+    			if(p.equals("/load")) {
+    				list = ClientComponent.getInstance().list;
+    				table = ClientComponent.getInstance().list.getTable();
+    				ArrayNode array = (ArrayNode) mapper.readTree(new File("players.json"));
+    				for(JsonNode node : array) {
+    					String uuid = node.get("uuid").asText();
+    					ArrayNode names = (ArrayNode) node.get("names");
+    					for(JsonNode nn : names) {
+    						String name = nn.get("name").asText();
+    						table.put(name, uuid);
+    					}
+    				}
+    				System.out.println(table.size());
+    				continue;
+    			}
+    			if(p.equals("/show")) {
+    				table = ClientComponent.getInstance().list.getTable();
+    				ArrayList<Entry<String, String>> collection = new ArrayList<>(table.entrySet());
+    				collection.sort(PlayerList.comparator);
+    				mapper.writeValue(new File("show"+System.currentTimeMillis()), collection);
+    				break;
+    			}
+    			if(p.startsWith("/record")) { // /record+<name>
+    				char op = p.charAt("/record".length());
+    				p = p.substring("/record".length() + 1);
+    				if(op == '+')
+    					list.add(p, System.currentTimeMillis());
+    				if(op == '-')
+    					list.remove(p, System.currentTimeMillis());
+    			}
+    			try {
+    				if(p.charAt(0) == '#') {
+    					client.execute(p);
+    				}
+    			} catch (Exception e) {
+					e.printStackTrace();
+				}
+    		}
+    	} catch (Exception e) {
 			e.printStackTrace();
 		}
     	

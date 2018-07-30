@@ -58,7 +58,6 @@ public class IRCMessageCodec extends ByteToMessageCodec<IRCMessage> {
 
 	@Override
 	protected void encode(ChannelHandlerContext ctx, IRCMessage msg, ByteBuf out) throws Exception {
-		String s;
 		if(msg.command.equals("PRIVMSG") && msg.trailing.length() > maxTrailing) {
 			String t = msg.trailing;
 			for(int i = 0, j = maxTrailing; i < t.length(); i = j, j += maxTrailing) {
