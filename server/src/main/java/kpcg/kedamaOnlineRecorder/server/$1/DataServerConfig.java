@@ -1,19 +1,24 @@
 package kpcg.kedamaOnlineRecorder.server.$1;
 
-import java.util.Map;
-
 public class DataServerConfig {
 
-	public String host;
+	public int thread;
 	
-	public int port;
-	
-	public class SSL {
+	public class NetConfig {
 		
-		public String keystore;
+		public String host;
 		
-		public String keystorepw;
+		public int port;
+		
+		public class SSL {
+			
+			public String keystore;
+			
+			public String keystorepw;
+		}
+		public SSL ssl = new SSL();
 	}
-	public SSL ssl = new SSL();
+	public NetConfig net = new NetConfig();
+	
 	
 }
