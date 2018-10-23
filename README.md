@@ -5,6 +5,18 @@ A Recorder to record the changes of player number in 'The Minecraft Server', wit
 
 
 
+## 2018/10/23 停止说明
+考虑到运行KedamaOnlineRecorder的腾讯云服务器即将到期，因性能问题新服务器将无法运行此记录器；同时群组内已经有新的记录方法[jsw-服务器分时人数统计表](https://kedama-stats.jsw3286.eu.org/d/rUAiZaxmk/fu-wu-qi-zhuang-tai?orgId=1&refresh=15m)
+该项目于2018/10/23 停止更新；同时2018/11/17服务器关闭，最后一次数据收集上传；
+
+最后状态：client运行3个月，仍然有不稳定性，IRCbot重启经常失败；server未完成;
+
+> 古语云：山外有山，人外有人，既然我技不如人并且体会不到乐趣，那就不必要在做无用功了，何况已经不能再投入时间。
+>
+> 希望已经记录的数据能为kedama群组做出一些微小的贡献吧~
+
+
+
 ## 开发日志
 
 ### 2018/7/14
@@ -66,7 +78,7 @@ A Recorder to record the changes of player number in 'The Minecraft Server', wit
   >
   > KPCG最高负责人Old_Tom 2018年7月29日宣
 
-  *声明：本项目自开始以来仅仅是使用kpcg作为maven package的groupId，并没有得到KPCG的明确承认；负责人所在聚落（至少是暂时）也不会加入KAPMA；因此本项目与KPCG、KAMPA均无关*
+  *声明：本项目自开始以来仅仅是使用kpcg作为maven package的groupId，并没有得到KPCG的明确承认；因此本项目与KPCG、KAMPA均无关*
 
 - <div></div>
 
