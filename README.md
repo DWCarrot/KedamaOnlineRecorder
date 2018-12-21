@@ -7,13 +7,11 @@ A Recorder to record the changes of player number in 'The Minecraft Server', wit
 
 ## 2018/10/23 停止说明
 考虑到运行KedamaOnlineRecorder的腾讯云服务器即将到期，因性能问题新服务器将无法运行此记录器；同时群组内已经有新的记录方法[jsw-服务器分时人数统计表](https://kedama-stats.jsw3286.eu.org/d/rUAiZaxmk/fu-wu-qi-zhuang-tai?orgId=1&refresh=15m)
-该项目于2018/10/23 停止更新；同时2018/11/17服务器关闭，最后一次数据收集上传；
+该项目于2018/10/23 停止更新；~~同时2018/11/17服务器关闭~~延长至2019/02/08，最后一次数据收集上传；
 
 最后状态：client运行3个月，仍然有不稳定性，IRCbot重启经常失败；server未完成;
 
-> 古语云：山外有山，人外有人，既然我技不如人并且体会不到乐趣，那就不必要在做无用功了，何况已经不能再投入时间。
->
-> 希望已经记录的数据能为kedama群组做出一些微小的贡献吧~
+希望已经记录的数据能为kedama群组做出一些微小的贡献吧~
 
 
 
